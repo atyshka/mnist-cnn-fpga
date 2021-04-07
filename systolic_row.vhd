@@ -41,7 +41,7 @@ use work.types.ALL;
 --use UNISIM.VComponents.all;
 
 entity systolic_row is
-    generic(W:integer := 9);
+    generic(W:integer := 9; BIAS:integer := 0; SCALE:integer := 16777216);
     port(
         clk: in std_logic;
         nums_in: in vector_8bit(W-1 downto 0);
@@ -49,7 +49,7 @@ entity systolic_row is
         weight_ld: in std_logic_vector(W-1 downto 0);
         clr: in std_logic;
         nums_out: out vector_8bit(W-1 downto 0);
-        sum_out: out signed(31 downto 0)
+        mac_out: out signed(7 downto 0)
 --        weight_out: out signed(7 downto 0)
     );
 end systolic_row;
@@ -72,6 +72,8 @@ end component;
 
 --signal weight_chain: vector_8bit(W downto 0);
 signal sum_chain: vector_32bit(W downto 0);
+signal biased: signed(31 downto 0);
+signal scaled: signed(63 downto 0);
 
 begin
 
@@ -81,7 +83,9 @@ end generate;
 
 --weight_chain(0) <= weight_in;
 sum_chain(0) <= x"00000000";
-sum_out <= sum_chain(W);
+biased <= sum_chain(W) + to_signed(BIAS, sum_chain'length);
+scaled <= (biased * to_signed(SCALE, biased'length));
+mac_out <= scaled(31 downto 24);
 --weight_out <= weight_chain(W);
 
 end Behavioral;
