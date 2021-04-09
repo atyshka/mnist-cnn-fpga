@@ -36,6 +36,10 @@ component systolic_array is
     );
 end component;
 
+-- Conv Biases -22614  -1953   8920  -5721   1029  -4363  20850  -3422 -10759 6682  -2305  -7267
+-- Conv Scaling 45930, 19517, 16497, 70983, 21671, 50430, 14097, 31750, 74862, 23211, 56295, 63894
+-- FC Biases -1531955 -1195546  -665806  -884319 -1639927  -717025 -1235184 -1324942 -1195119 -1719265
+
 signal sums: vector_8bit(H-1 downto 0);
 signal swint: signed(7 downto 0);
 begin
