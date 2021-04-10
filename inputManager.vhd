@@ -72,20 +72,54 @@ elsif clk'event and clk = '1' then
     timerA<=timerA+1;
     timerB<=timerB+1;
     timerC<=timerC+1;
-    if (timerA<9) then
+    if (timerA<25) then
         aA <= aA+1;
        
-    elsif (timerA=9) then
+    elsif (timerA=25) then
         aA<=aA+1;
         aD<=aA+3;
         
-    elsif (timerA=10) then
+    elsif (timerA=26) then
         aA<=aA+1;
         aD<=aA+3;
         
-    elsif (timerA=11) then
+    elsif (timerA=27) then
         aA<=aA+3;
         timerA<="0000000001";
+    end if;
+    
+    
+    if (timerB<25) then
+        aB <= aB+1;
+       
+    elsif (timerB=25) then
+        aB<=aB+1;
+        aD<=aB+3;
+        
+    elsif (timerB=26) then
+        aB<=aB+1;
+        aD<=aB+3;
+        
+    elsif (timerB=27) then
+        aB<=aB+3;
+        timerB<="0000000001";
+    end if;
+    
+    
+    if (timerC<25) then
+        aC <= aC+1;
+       
+    elsif (timerC=25) then
+        aC<=aC+1;
+        aD<=aC+3;
+        
+    elsif (timerC=26) then
+        aC<=aC+1;
+        aD<=aC+3;
+        
+    elsif (timerC=27) then
+        aC<=aC+3;
+        timerC<="0000000001";
     end if;
     if (newCount=3) then
         timerB<="0000000000";
