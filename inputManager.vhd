@@ -48,27 +48,10 @@ end inputManager;
 architecture Behavioral of inputManager is
 
 
-signal timerA,timerB, timerC, timerD, count: STD_LOGIC_VECTOR(9 downto 0);--:=(others => '0');
+signal timerA,timerB, timerC, timerD, count: STD_LOGIC_VECTOR(9 downto 0) :=(others => '0');
 signal aA, aB, aC, aD: STD_LOGIC_VECTOR(9 downto 0):=(others => '0');
 
 begin
-
-process(clk,clr)
-begin
-if clr = '1' then
-    count<="0000000000";
-
-    timerA<="0000000000";
-    timerB<="0000000000";
-    timerC<="0000000000";
-    
-    aA<="0000000000";
-    aB<="0000000000";
-    aC<="0000000000";
-elsif clk'event and clk = '1' then
-count<=count +1;
-end if;
-end process;
 
 process(clk,clr)
 variable newCount: STD_LOGIC_VECTOR (9 downto 0) := "0000000000";
@@ -83,8 +66,9 @@ if clr = '1' then
     aA<="0000000000";
     aB<="0000000000";
     aC<="0000000000";
+    aD<="0000000000";
 elsif clk'event and clk = '1' then
-newCount:=Count+1;
+    newCount:=Count+1;
     timerA<=timerA+1;
     timerB<=timerB+1;
     timerC<=timerC+1;
@@ -111,10 +95,8 @@ newCount:=Count+1;
         timerC<="0000000000";
         aC<="0000011000";
     end if; 
-        count<=newCount;
+    count<=newCount;
 end if;   
 end process;
-
-
 
 end Behavioral;
