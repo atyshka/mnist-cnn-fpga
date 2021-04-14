@@ -36,11 +36,11 @@ component inputManager is
            );
 end component;
 
-component counter is
-    Port ( mclk : in STD_LOGIC;
-           clr : in STD_LOGIC;
-           counter: out STD_LOGIC_VECTOR(9 downto 0));
-end component;
+--component counter is
+--    Port ( mclk : in STD_LOGIC;
+--           clr : in STD_LOGIC;
+--           counter: out STD_LOGIC_VECTOR(9 downto 0));
+--end component;
 
 component digitsROM IS
   PORT (
@@ -60,7 +60,7 @@ signal mclk, clr : STD_LOGIC := '0';
 constant T: time:= 10 ns;
 constant DC: real:= 0.5;
 begin
-    c: counter port map(mclk => mclk, clr => clr, counter=>count);
+--    c: counter port map(mclk => mclk, clr => clr, counter=>count);
     i: inputManager port map(addrA=>aA,addrB=>aB,addrC=>aC,addrD=>aD,clk=>mclk,dataA=>dataA,dataB=>dataB,dataC=>dataC,dataD=>dataD,clr=>clr);
     r1: digitsROM port map(clka=>mclk,addra=>aA,douta=> dataA);
     r2: digitsROM port map(clka=>mclk,addra=>aB,douta=> dataB);

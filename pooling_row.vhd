@@ -63,29 +63,38 @@ component signed_reg is
 		q : out SIGNED(N-1 downto 0)
 	);
 end component;
+component delay_reg is
+    generic (DELAY: integer := 1);
+    port(
+        clk, clr: in std_logic;
+        num_in: in signed(7 downto 0);
+        num_out: out signed(7 downto 0)
+    );
+end component;
 
 --signal frontend_load, backend_load : std_logic;
 signal count: unsigned(1 downto 0);
-signal val_1, val_2, val_4, val_5: signed (7 downto 0);
+signal delayed_val, val_1, val_2, val_4, val_5: signed (7 downto 0);
 signal val_3: std_logic_vector(7 downto 0);
 signal max: signed(7 downto 0) := x"00";
 
 begin
 
-reg_1: signed_reg port map(load => '1', clk => clk, clr => clr, d => num_in, q => val_1);
+input_delay: delay_reg generic map(DELAY=>DELAY) port map(clk => clk, clr => clr, num_in => num_in, num_out => delayed_val);
+reg_1: signed_reg port map(load => '1', clk => clk, clr => clr, d => delayed_val, q => val_1);
 reg_2: signed_reg port map(load => '1', clk => clk, clr => clr, d => val_1, q => val_2);
 shifter: pool_shifter port map(d => std_logic_vector(val_2), clk => clk, ce => '1', sclr => clr, q => val_3);
 reg_3: signed_reg port map(load => '1', clk => clk, clr => clr, d => signed(val_3), q => val_4);
 reg_4: signed_reg port map(load => '1', clk => clk, clr => clr, d => val_4, q => val_5);
 
-process(clk, clr)
-begin
-    if (clr = '1') then
-        count <= to_unsigned(4 - DELAY, count'length);
-    elsif rising_edge(clk) then
-        count <= count + 1;
-    end if;
-end process;
+--process(clk, clr)
+--begin
+--    if (clr = '1') then
+--        count <= 0;
+--    elsif rising_edge(clk) then
+--        count <= count + 1;
+--    end if;
+--end process;
 
 process(val_1, val_2, val_4, val_5)
 variable max1, max2 : signed(7 downto 0);

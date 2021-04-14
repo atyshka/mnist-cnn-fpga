@@ -20,14 +20,6 @@
 
 
 library IEEE;
-use IEEE.NUMERIC_STD.ALL;
-
-package types is
-    type vector_8bit is array(natural range <>) of signed(7 downto 0);
-    type vector_32bit is array(natural range <>) of signed(31 downto 0);
-end package;
-
-library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 use work.types.ALL;
@@ -41,7 +33,7 @@ use work.types.ALL;
 --use UNISIM.VComponents.all;
 
 entity systolic_row is
-    generic(W:integer := 9; BIAS:integer := 0; SCALE:integer := 16777216);
+    generic(W:integer := 9; BIAS:integer := 0; SCALE:integer := 16777216; WEIGHTS: vector_int);
     port(
         clk: in std_logic;
         nums_in: in vector_8bit(W-1 downto 0);
@@ -57,6 +49,9 @@ end systolic_row;
 architecture Behavioral of systolic_row is
 
 component systolic_cell is
+    generic(
+        WEIGHT: integer := 1
+    );
     port(
         clk: in std_logic;
         sum_in: in signed(31 downto 0);
@@ -78,14 +73,14 @@ signal scaled: signed(63 downto 0);
 begin
 
 gen_cells: for i in 0 to W-1 generate
-    cell: systolic_cell port map(clk => clk, sum_in => sum_chain(i), num_in => nums_in(i), weight_in => weight_in, weight_ld => weight_ld(i), clr => clr, num_out => nums_out(i),sum_out => sum_chain(i+1));
+    cell: systolic_cell generic map(WEIGHT=>WEIGHTS(i)) port map(clk => clk, sum_in => sum_chain(i), num_in => nums_in(i), weight_in => weight_in, weight_ld => weight_ld(i), clr => clr, num_out => nums_out(i),sum_out => sum_chain(i+1));
 end generate;
 
 --weight_chain(0) <= weight_in;
 sum_chain(0) <= x"00000000";
-biased <= sum_chain(W) + to_signed(BIAS, sum_chain'length);
+biased <= sum_chain(W) + to_signed(BIAS, sum_chain(W)'length);
 scaled <= (biased * to_signed(SCALE, biased'length));
-mac_out <= scaled(31 downto 24);
+mac_out <= resize(('0' & scaled(31 downto 24)) - 128, mac_out'length) when scaled(63) = '0' else x"80";
 --weight_out <= weight_chain(W);
 
 end Behavioral;

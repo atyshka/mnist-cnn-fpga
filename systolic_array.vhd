@@ -33,7 +33,7 @@ use work.types.ALL;
 --use UNISIM.VComponents.all;
 
 entity systolic_array is
-    generic(H:integer := 12; W:integer := 9);
+    generic(H:integer := 12; W:integer := 9; BIASES:vector_int(0 to 11); SCALES:vector_int(0 to 11); WEIGHTS:matrix_int);
     port(
         clk: in std_logic;
         nums_in: in vector_8bit(W-1 downto 0);
@@ -47,7 +47,7 @@ end systolic_array;
 
 architecture Behavioral of systolic_array is
 component systolic_row is
-    generic(W:integer := 9; BIAS:integer := 0; SCALE:integer := 16777216);
+    generic(W:integer := 9; BIAS:integer := 0; SCALE:integer := 16777216; WEIGHTS: vector_int);
     port(
         clk: in std_logic;
         nums_in: in vector_8bit(W-1 downto 0);
@@ -69,7 +69,7 @@ signal load_signals: std_logic_vector((W * H) - 1 downto 0);
 
 begin
 gen_rows: for i in 0 to H-1 generate
-    cell: systolic_row port map(clk => clk, nums_in => nums(i), weight_in => weight_in, weight_ld => load_signals((i * W) + W-1 downto (i * W)), clr => clr, nums_out => nums(i+1), mac_out => mac_out(i));
+    cell: systolic_row generic map(BIAS => BIASES(i), SCALE => SCALES(i), WEIGHTS=>WEIGHTS(i)) port map(clk => clk, nums_in => nums(i), weight_in => weight_in, weight_ld => load_signals((i * W) + W-1 downto (i * W)), clr => clr, nums_out => nums(i+1), mac_out => mac_out(i));
 end generate;
 
 nums(0) <= nums_in;

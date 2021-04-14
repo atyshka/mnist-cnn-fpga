@@ -32,6 +32,9 @@ use IEEE.NUMERIC_STD.ALL;
 --use UNISIM.VComponents.all;
 
 entity systolic_cell is
+    generic(
+        WEIGHT: integer := 1
+    );
     port(
         clk: in std_logic;
         sum_in: in signed(31 downto 0);
@@ -59,13 +62,13 @@ component signed_reg is
 	     );
 end component;
 
-signal weight, num: signed(7 downto 0);
+signal num: signed(7 downto 0);
 signal sum: signed(31 downto 0);
 begin
-    weight_reg: signed_reg port map(load => weight_ld, clk => clk, clr => clr, d => weight_in, q => weight);
+--    weight_reg: signed_reg port map(load => weight_ld, clk => clk, clr => clr, d => weight_in, q => weight);
     num_reg: signed_reg port map(load => '1', clk => clk, clr => clr, d => num_in, q => num);
     sum_reg: signed_reg generic map(N => 32) port map(load => '1', clk => clk, clr => clr, d => sum_in, q => sum);
 --    weight_out <= weight;
     num_out <= num;
-    sum_out <= sum + (num * weight);
+    sum_out <= sum + (num * to_signed(weight, num'length));
 end Behavioral;
