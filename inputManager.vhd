@@ -92,7 +92,7 @@ elsif clk'event and clk = '1' then
         msel(5 downto 4) <="10";
     elsif (timerA=27) then
         aA<=aA+3;
-        timerA<="0000000001";
+        timerA<="0000000010";
         msel(5 downto 4) <="11";
     end if;
     
@@ -110,7 +110,7 @@ elsif clk'event and clk = '1' then
         msel(3 downto 2) <="10";
     elsif (timerB=27) then
         aB<=aB+3;
-        timerB<="0000000001";
+        timerB<="0000000010";
         msel(3 downto 2) <="11";
     end if;
     
@@ -128,16 +128,16 @@ elsif clk'event and clk = '1' then
         msel(1 downto 0) <="10";
     elsif (timerC=27) then
         aC<=aC+3;
-        timerC<="0000000001";
+        timerC<="0000000010";
         msel(1 downto 0) <="11";
     end if;
     if (newCount=3) then
         timerB<="0000000000";
-        aB<="0000001100";
+        aB<="0000011100";
     end if;
     if (newCount=6) then
         timerC<="0000000000";
-        aC<="0000011000";
+        aC<="0000111000";
     end if; 
     count<=newCount;
 end if;   

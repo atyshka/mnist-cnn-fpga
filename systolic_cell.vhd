@@ -39,8 +39,6 @@ entity systolic_cell is
         clk: in std_logic;
         sum_in: in signed(31 downto 0);
         num_in: in signed(7 downto 0);
-        weight_in: in signed(7 downto 0);
-        weight_ld: in std_logic;
         clr: in std_logic;
         num_out: out signed(7 downto 0);
         sum_out: out signed(31 downto 0)

@@ -53,10 +53,29 @@ component pooling_row is
         num_out: out signed(7 downto 0)
     );
 end component;
+
+signal total_count, row_count: unsigned(19 downto 0);
 begin
 
 gen_rows: for i in 0 to 11 generate
     row: pooling_row generic map(DELAY=>11-i) port map(clk => clk, clr => clr, num_in => nums(i), num_out => pooled(i));
 end generate;
+
+count_proc: process(clk, clr)
+begin
+    if clr = '1' then
+        total_count <= (others => '0');
+        row_count <= (others => '0');
+    elsif clk'event and clk = '1' then
+        total_count <= total_count + 1;
+        if row_count = 51 then
+            row_count <= (others => '0');
+        elsif total_count > 23 then
+            row_count <= row_count + 1;
+        end if;
+    end if;
+end process;
+
+fifo_write <= '1' when row_count(0) = '1' and row_count > 25 and total_count < 698 else '0';
 
 end Behavioral;

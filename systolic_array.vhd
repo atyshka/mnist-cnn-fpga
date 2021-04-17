@@ -37,9 +37,6 @@ entity systolic_array is
     port(
         clk: in std_logic;
         nums_in: in vector_8bit(W-1 downto 0);
-        weight_in: in signed(7 downto 0);
-        weight_addr: in unsigned(6 downto 0);
-        weight_ld: in std_logic;
         clr: in std_logic;
         mac_out: out vector_8bit(H-1 downto 0)
     );
@@ -51,8 +48,6 @@ component systolic_row is
     port(
         clk: in std_logic;
         nums_in: in vector_8bit(W-1 downto 0);
-        weight_in: in signed(7 downto 0);
-        weight_ld: in std_logic_vector(W-1 downto 0);
         clr: in std_logic;
         nums_out: out vector_8bit(W-1 downto 0);
         mac_out: out signed(7 downto 0)
@@ -69,17 +64,10 @@ signal load_signals: std_logic_vector((W * H) - 1 downto 0);
 
 begin
 gen_rows: for i in 0 to H-1 generate
-    cell: systolic_row generic map(BIAS => BIASES(i), SCALE => SCALES(i), WEIGHTS=>WEIGHTS(i)) port map(clk => clk, nums_in => nums(i), weight_in => weight_in, weight_ld => load_signals((i * W) + W-1 downto (i * W)), clr => clr, nums_out => nums(i+1), mac_out => mac_out(i));
+    cell: systolic_row generic map(BIAS => BIASES(i), SCALE => SCALES(i), WEIGHTS=>WEIGHTS(i)) 
+                        port map(clk => clk, nums_in => nums(i), clr => clr, nums_out => nums(i+1), mac_out => mac_out(i));
 end generate;
 
 nums(0) <= nums_in;
-
-process (weight_addr, weight_ld)
-begin
-    load_signals <= (others => '0'); -- default
-    if weight_ld = '1' then
-        load_signals(to_integer(weight_addr)) <= '1';
-    end if;
-end process;
 
 end Behavioral;

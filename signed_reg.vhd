@@ -24,7 +24,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
 entity signed_reg is
-	 generic(N:integer := 8);
+	 generic(N:integer := 8; DEFAULT:integer := 0);
 	 port(
 		 load : in STD_LOGIC;
 		 clk : in STD_LOGIC;
@@ -39,7 +39,7 @@ begin
 	process(clk, clr)
 	begin
 		if clr = '1' then
-			q <= (others => '0');
+			q <= to_signed(DEFAULT, q'length);
 		elsif clk'event and clk = '1' then
 			if load = '1' then
 				q <= d;
