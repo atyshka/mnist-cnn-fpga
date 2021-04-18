@@ -70,6 +70,15 @@ component signed_reg is
 		 q : out SIGNED(N-1 downto 0)
 	     );
 end component;
+component dsp_rescaling IS
+  PORT (
+    CLK : IN STD_LOGIC;
+    A : IN STD_LOGIC_VECTOR(24 DOWNTO 0);
+    B : IN STD_LOGIC_VECTOR(17 DOWNTO 0);
+    D : IN STD_LOGIC_VECTOR(24 DOWNTO 0);
+    P : OUT STD_LOGIC_VECTOR(42 DOWNTO 0)
+  );
+END component;
 
 --signal weight_chain: vector_8bit(W downto 0);
 signal sum_chain: vector_32bit(W downto 0);
@@ -77,6 +86,9 @@ signal bias_input, biased: signed(31 downto 0);
 signal scaled: signed(63 downto 0);
 signal rounding_correction: signed(1 downto 0);
 signal result: signed(7 downto 0);
+signal input_truncated: signed(24 downto 0);
+signal dsp_out: std_logic_vector(42 downto 0);
+signal dsp_out_signed: signed(42 downto 0);
 --attribute use_dsp : string;
 --attribute use_dsp of Behavioral : architecture is "yes";
 begin
@@ -86,16 +98,20 @@ gen_cells: for i in 0 to W-1 generate
                         port map(clk => clk, sum_in => sum_chain(i), num_in => nums_in(i), 
                         clr => clr, num_out => nums_out(i),sum_out => sum_chain(i+1));
 end generate;
-in_reg: signed_reg generic map(N => 32) port map(clk => clk, clr => clr, load => '1', d => sum_chain(W), q => bias_input);
-out_reg: signed_reg port map(clk => clk, clr => clr, load => '1', d => result, q => mac_out); 
+--in_reg: signed_reg generic map(N => 32) port map(clk => clk, clr => clr, load => '1', d => sum_chain(W), q => bias_input);
+--out_reg: signed_reg port map(clk => clk, clr => clr, load => '1', d => result, q => mac_out); 
 
---weight_chain(0) <= weight_in;
 sum_chain(0) <= x"00000000";
-biased <= bias_input + to_signed(BIAS, bias_input'length);
---biased <= sum_chain(W) + to_signed(BIAS, sum_chain(W)'length);
-scaled <= (biased * to_signed(SCALE, biased'length));
-rounding_correction <= "01" when scaled(31) = '0' else "00";
-result <= (not(scaled(31)) & scaled(30 downto 24)) + rounding_correction  when biased(31) = '0' else x"80";
---weight_out <= weight_chain(W);
+scaling: dsp_rescaling port map(clk => clk, A => std_logic_vector(to_signed(BIAS, 25)), 
+                                B => std_logic_vector(to_signed(SCALE, 18)), 
+                                D => std_logic_vector(input_truncated),
+                                P => dsp_out);
+--biased <= bias_input + to_signed(BIAS, bias_input'length);
+--scaled <= (biased * to_signed(SCALE, biased'length));
+--rounding_correction <= "01" when scaled(31) = '0' else "00";
+--result <= (not(scaled(31)) & scaled(30 downto 24)) + rounding_correction  when biased(31) = '0' else x"80";
+input_truncated <= resize(sum_chain(W), 25);
+dsp_out_signed <= signed(dsp_out);
+mac_out <= (not(dsp_out_signed(31)) & dsp_out_signed(30 downto 24)) when dsp_out_signed(42) = '0' else x"80";
 
 end Behavioral;

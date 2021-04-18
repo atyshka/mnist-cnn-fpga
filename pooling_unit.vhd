@@ -70,12 +70,12 @@ begin
         total_count <= total_count + 1;
         if row_count = 51 then
             row_count <= (others => '0');
-        elsif total_count > 23 then
+        elsif total_count > 24 then
             row_count <= row_count + 1;
         end if;
     end if;
 end process;
 
-fifo_write <= '1' when row_count(0) = '1' and row_count > 25 and total_count < 698 else '0';
+fifo_write <= '1' when row_count(0) = '1' and row_count > 25 and total_count < 701 else '0';
 
 end Behavioral;
