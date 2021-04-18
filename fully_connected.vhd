@@ -84,6 +84,7 @@ begin
 count_proc: process(clk, clr)
 begin
     if clr = '1' then
+        count <= 0;
         index <= 0;
         next_index <= 0;
         state <= waiting;
