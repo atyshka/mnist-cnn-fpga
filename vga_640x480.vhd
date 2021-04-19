@@ -23,7 +23,7 @@ architecture vga_640x480 of vga_640x480 is
 	constant vfp: std_logic_vector(9 downto 0) := "1000000001"; --Vertical front porch = 513 (2+31+480)
 	signal hcs, vcs: std_logic_vector(9 downto 0); --These are the Horizontal and Vertical counters
 	signal vsenable: std_logic; --Enable for the Vertical counter
-	
+
 begin
 	--Counter for the horizontal sync signal
 	process(clk, clr)
@@ -44,10 +44,10 @@ begin
 			end if;
 		end if;
 	end process;
-	
+
 	hsync <= '0' when hcs < 96 else '1';		
 	--Horizontal Sync Pulse is low when hc is 0 - 95
-	
+
 	--Counter for the vertical sync signal
 	process(clk, clr)
 	begin
@@ -63,16 +63,16 @@ begin
 			end if;
 		end if;
 	end process;
-	
+
 	--Vertical Sync Pulse is low when vc is 0 or 1
 	vsync <= '0' when vcs < 2 else '1';		
-	
+
 	--Enable video out when within the porches
 	vidon <= '1' when (((hcs < hfp) and (hcs >= hbp)) 
 	and ((vcs < vfp) and (vcs >= vbp))) else '0';	
-	
+
 	-- output horizontal and vertical counters
 	hc <= hcs;
 	vc <= vcs;
-	
+
 end vga_640x480;

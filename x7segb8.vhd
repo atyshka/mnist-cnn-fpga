@@ -55,7 +55,7 @@ begin
             or x(11) or x(10) or x(9) or x(8)
             or x(7) or x(6) or x(5) or x(4);
 	aen(0) <= '1';	-- digit 0 always on
-	
+
 -- Quad 4-to-1 MUX: mux44
 	process(s, x)
 	begin

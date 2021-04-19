@@ -18,7 +18,7 @@ entity systolic_topfile is
         clr: in std_logic;
         a_to_g: out std_logic_vector(6 downto 0);
         an: out std_logic_vector(7 downto 0);
-        dp, vidon_out, hsync_out, vsync_out: out std_logic;
+        dp, hsync_out, vsync_out: out std_logic;
         ld, red, green, blue: out std_logic_vector(3 downto 0)
     );
 end systolic_topfile;
@@ -137,6 +137,11 @@ component fc_weight_rom is
     douta : OUT STD_LOGIC_VECTOR(79 DOWNTO 0)
   );
 end component;
+component clkdiv is
+    Port ( mclk : in STD_LOGIC;
+           clr : in STD_LOGIC;
+           clk25 : out STD_LOGIC);
+end component;
 
 constant conv_bias: vector_int := 
         (-22614, -1953, 8920, -5721, 1029, -4363, 20850, -3422, -10759, 6682, -2305, -7267);
@@ -167,7 +172,7 @@ signal addrAInput, addrADisplay, addrA, addrB, addrC, addrD : STD_LOGIC_VECTOR (
 signal dataA, dataB, dataC, dataD : STD_LOGIC_VECTOR (7 downto 0);
 signal CNNAnswer : STD_LOGIC_VECTOR (31 downto 0);
 signal conv_input: vector_8bit(8 downto 0);
-signal fifo_write, fifo_read, empty : std_logic;
+signal fifo_write, fifo_read, empty, clk_vga : std_logic;
 signal result: unsigned(3 downto 0);
 
 signal hsync, vsync, vidon, done: std_logic;
@@ -196,7 +201,9 @@ weight_rom: fc_weight_rom port map(clka => mclk, addra => fc_weight_addr, douta 
 
 sevSeg: x7segb8 port map (x => CNNAnswer, clk => mclk, clr => clr, a_to_g => a_to_g, an => an, dp => dp);
 
-VGActrl: vga_640x480 port map (clk => mclk, clr => clr, hc => hc, vc => vc, hsync => hsync, vsync => vsync, vidon => vidon);
+vga_clkdiv: clkdiv port map(mclk => mclk, clr => clr, clk25 => clk_vga);
+
+VGActrl: vga_640x480 port map (clk => clk_vga, clr => clr, hc => hc, vc => vc, hsync => hsync, vsync => vsync, vidon => vidon);
 
 VGApic: vga_bsprite2a port map (vidon => vidon, done => done, hc => hc, vc => vc, dataROM => dataA, rom_addr16 => addrADisplay,red => red, green => green, blue => blue);
 
@@ -209,7 +216,6 @@ ld <= std_logic_vector(result);
 CNNAnswer<= X"0000000"& std_logic_vector(result);
 hsync_out<=hsync;
 vsync_out<=vsync;
-vidon_out<=vidon;
 addrA <= addrAInput when done='0' else addrADisplay;
 --fifo_read <= '0';
 --swint <= signed(sw);

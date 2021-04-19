@@ -28,16 +28,16 @@ begin
 	R1 <= '0' & "0000" & "00001";
 	ypix <= vc - vbp - R1;
 	xpix <= hc - hbp - C1;
-	
+
 	--Enable sprite video out when within the sprite region
  	spriteon <= '1' when (((hc > C1 + hbp) and (hc <= C1 + hbp + w))
            and ((vc >= R1 + vbp) and (vc < R1 + vbp + h))) else '0'; 
 	process(xpix, ypix)
 	variable  rom_addr1, rom_addr2: STD_LOGIC_VECTOR (9 downto 0);
 	begin 
-		rom_addr1 := ('0' & ypix(4 downto 0) & "0000") + ("00" & ypix(4 downto 0) & "000") + ("000" & ypix(4 downto 0) & "00");	
+		rom_addr1 := ('0' & ypix(6 downto 2) & "0000") + ("00" & ypix(6 downto 2) & "000") + ("000" & ypix(6 downto 2) & "00");	
            -- y*(16+8+4) = y*28
-		rom_addr2 := rom_addr1 + ("00000" & xpix(4 downto 0)); -- y*28+x
+		rom_addr2 := rom_addr1 + ("00000" & xpix(6 downto 2)); -- y*28+x
 		rom_addr16 <= rom_addr2(9 downto 0);
 	end process;
 	process(spriteon, vidon, dataROM, done)
@@ -51,5 +51,5 @@ begin
     			blue <= (not dataROM(7)) & dataROM(6) & dataROM(5) & dataROM(4);
 		end if;
   	end process; 
-					
+
    end vga_bsprite2a;
