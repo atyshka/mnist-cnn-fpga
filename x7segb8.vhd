@@ -13,7 +13,7 @@ entity x7segb8 is
 		 dp : out STD_LOGIC
 	     );
 end x7segb8;
-
+--
 architecture behavioral of x7segb8 is
 
 signal s: STD_LOGIC_VECTOR(2 downto 0);
