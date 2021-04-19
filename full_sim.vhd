@@ -23,23 +23,20 @@ component systolic_topfile is
     port(
         mclk: in std_logic;
         clr: in std_logic;
-        rgb: out std_logic_vector(11 downto 0);
-        an: out std_logic_vector(7 downto 0);
         a_to_g: out std_logic_vector(6 downto 0);
-        hsync_out, vsync_out,dp: out std_logic;
-        ld: out std_logic_vector(3 downto 0)
+        an: out std_logic_vector(7 downto 0);
+        dp, vidon_out, hsync_out, vsync_out: out std_logic;
+        ld, red, green, blue: out std_logic_vector(3 downto 0)
     );
 end component;
  
-signal mclk, clr,hsync_out,vsync_out : STD_LOGIC := '0'; 
-signal rgb: std_logic_vector(11 downto 0); 
-signal ld: std_logic_vector(3 downto 0);              
+signal mclk, clr : STD_LOGIC := '0';               
 --signal num_in, num_out : vector_8bit(11 downto 0) := (others => x"00");
 
 constant T: time:= 10 ns;
 constant DC: real:= 0.5;
 begin
-    uut: systolic_topfile port map(mclk => mclk, clr => clr, rgb=>rgb,hsync_out=>hsync_out, vsync_out=>vsync_out,ld=>ld);
+    uut: systolic_topfile port map(mclk => mclk, clr => clr);
     
     clock_process: process
     begin
