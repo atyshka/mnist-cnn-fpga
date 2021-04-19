@@ -16,11 +16,10 @@ entity systolic_topfile is
     port(
         mclk: in std_logic;
         clr: in std_logic;
-        rgb: out std_logic_vector(11 downto 0);
-        an: out std_logic_vector(7 downto 0);
         a_to_g: out std_logic_vector(6 downto 0);
-        hsync_out, vsync_out,dp: out std_logic;
-        ld: out std_logic_vector(3 downto 0)
+        an: out std_logic_vector(7 downto 0);
+        dp, vidon_out, hsync_out, vsync_out: out std_logic;
+        ld, red, green, blue: out std_logic_vector(3 downto 0)
     );
 end systolic_topfile;
 
@@ -52,43 +51,23 @@ component inputManager is
            clr, clk: in STD_LOGIC
            );
 end component;
-component vga_640x480 is
-	port (
-		clk, clr : in std_logic;
-		hsync, vsync : out std_logic;
-		hc, vc : out std_logic_vector(9 downto 0);
-		vidon : out std_logic
-		);
-end component;
-component vga_bsprite2a is
-    port ( vidon: in std_logic;
-           done: in std_logic;
-           hc : in std_logic_vector(9 downto 0);
-           vc : in std_logic_vector(9 downto 0);
-           ROMdata: in std_logic_vector(7 downto 0);
-           ROMad: out std_logic_vector(7 downto 0);
-           red : out std_logic_vector(3 downto 0);
-           green : out std_logic_vector(3 downto 0);
-           blue : out std_logic_vector(3 downto 0)
-           );           
-end component;
-component digitsDualROM IS
-  PORT (
-    clka : IN STD_LOGIC;
-    addra : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
-    douta : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
-    clkb : IN STD_LOGIC;
-    addrb : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
-    doutb : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
-  );
-END component;
-component digitsROM IS
-  PORT (
+component digitsROM is
+  port (
     clka : IN STD_LOGIC;
     addra : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
     douta : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
   );
-END component;
+end component;
+component digitsDualROM is
+  port (
+    clka : IN STD_LOGIC;
+    addra : IN STD_LOGIC_VECTOR(12 DOWNTO 0);
+    douta : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+    clkb : IN STD_LOGIC;
+    addrb : IN STD_LOGIC_VECTOR(12 DOWNTO 0);
+    doutb : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
+  );
+end component;
 component pooling_unit is
     port ( 
         clk, clr, active: in std_logic;
@@ -96,6 +75,14 @@ component pooling_unit is
         fifo_write: out std_logic;
         pooled: out vector_8bit(11 downto 0)
     );
+end component;
+component vga_640x480 is
+	port (
+		clk, clr : in std_logic;
+		hsync, vsync : out std_logic;
+		hc, vc : out std_logic_vector(9 downto 0);
+		vidon : out std_logic
+		);
 end component;
 component fully_connected_fifo is
   PORT (
@@ -134,6 +121,15 @@ component fully_connected is
         done: out std_logic
     );
 end component;
+component vga_bsprite2a is
+    port ( vidon, done: in std_logic;
+           hc : in std_logic_vector(9 downto 0);
+           vc : in std_logic_vector(9 downto 0);
+           dataROM: in std_logic_vector(7 downto 0);
+           rom_addr16: out std_logic_vector(9 downto 0);
+           red, green, blue : out std_logic_vector(3 downto 0)
+	);
+end component;
 component fc_weight_rom is
   PORT (
     clka : IN STD_LOGIC;
@@ -167,11 +163,16 @@ signal fifo_input, fifo_output: std_logic_vector(95 downto 0);
 signal fc_weights_raw: std_logic_vector(79 downto 0);
 signal fc_weight_addr: std_logic_vector(10 downto 0);
 --signal swint: signed(7 downto 0);
-signal addrA, addrB, addrC, addrD, hc,vc : STD_LOGIC_VECTOR (9 downto 0);
+signal addrAInput, addrADisplay, addrA, addrB, addrC, addrD : STD_LOGIC_VECTOR (9 downto 0);
 signal dataA, dataB, dataC, dataD : STD_LOGIC_VECTOR (7 downto 0);
+signal CNNAnswer : STD_LOGIC_VECTOR (31 downto 0);
 signal conv_input: vector_8bit(8 downto 0);
-signal fifo_write, fifo_read, empty, done, hsync, vsync, vidon : std_logic;
+signal fifo_write, fifo_read, empty : std_logic;
 signal result: unsigned(3 downto 0);
+
+signal hsync, vsync, vidon, done: std_logic;
+signal hc, vc: std_logic_vector (9 downto 0);
+
 
 begin
 r1: digitsROM port map(clka=>mclk,addra=>addrA,douta=> dataA);
@@ -182,29 +183,34 @@ r4: digitsROM port map(clka=>mclk,addra=>addrD,douta=> dataD);
 --r12: digitsDualROM port map(clka=>mclk,clkb=>mclk, addra=>addrA, addrb=>addrB, douta=> dataA, doutb=>dataB);
 --r34: digitsDualROM port map(clka=>mclk,clkb=>mclk, addra=>addrC, addrb=>addrD, douta=> dataC, doutb=>dataD);
 
-input: inputmanager port map(clk => mclk, clr => clr, addrA => addrA, addrB => addrB, addrC => addrC, addrD => addrD,
+input: inputmanager port map(clk => mclk, clr => clr, addrA => addrAInput, addrB => addrB, addrC => addrC, addrD => addrD,
                                 dataA => dataA, dataB => dataB, dataC => dataC, dataD => dataD, numsOut => conv_input);
 arr: systolic_array generic map(BIASES => conv_bias, SCALES => conv_scaling, WEIGHTS => conv_weights) 
                     port map(clk => mclk, nums_in => conv_input, clr => clr, mac_out => conv_out);
 pool: pooling_unit port map(clk => mclk, clr => clr, active => '1', nums => conv_out, pooled => pooled_out, fifo_write => fifo_write);
 fifo: fully_connected_fifo port map(clk => mclk, srst => clr, din => fifo_input, wr_en => fifo_write,
                                     rd_en => fifo_read, dout => fifo_output, empty => empty);
-fc: fully_connected generic map(BIASES => fc_bias) port map(clk => mclk, clr => clr, nums => fc_in, fifo_empty => empty, 
-                                                            weights => fc_weights_raw, weight_addr => fc_weight_addr, fifo_read => fifo_read, output => result, done=>done);
+fc: fully_connected generic map(BIASES => fc_bias) port map(clk => mclk, clr => clr, nums => fc_in, fifo_empty => empty, weights => fc_weights_raw,
+                                                             weight_addr => fc_weight_addr, fifo_read => fifo_read, output => result, done => done);
 weight_rom: fc_weight_rom port map(clka => mclk, addra => fc_weight_addr, douta => fc_weights_raw);
 
-vga_ctrl: vga_640x480 port map(clk =>mclk, clr=>clr, hsync=>hsync, vsync=>vsync, hc=>hc, vc=>vc, vidon=> vidon);
-vga_image: vga_bsprite2a port map(vidon => vidon, done=> done, hc=>hc, vc=>vc, ROMdata=>dataA,red=>rgb(11 downto 8), green=>rgb(7 downto 4), blue=>rgb(3 downto 0));
-sevSeg: x7segb8 port map(clk=>mclk, x=>std_logic_vector(result), clr=>clr, a_to_g=>a_to_g, dp=>dp, an=>an);
+sevSeg: x7segb8 port map (x => CNNAnswer, clk => mclk, clr => clr, a_to_g => a_to_g, an => an, dp => dp);
+
+VGActrl: vga_640x480 port map (clk => mclk, clr => clr, hc => hc, vc => vc, hsync => hsync, vsync => vsync, vidon => vidon);
+
+VGApic: vga_bsprite2a port map (vidon => vidon, done => done, hc => hc, vc => vc, dataROM => dataA, rom_addr16 => addrADisplay,red => red, green => green, blue => blue);
+
 
 gen_fifo_signals: for i in 0 to 11 generate
     fifo_input(i*8 + 7 downto i*8) <= std_logic_vector(pooled_out(i));
     fc_in(i) <= signed(fifo_output(i*8 + 7 downto i*8));
 end generate;
 ld <= std_logic_vector(result);
+CNNAnswer<= X"0000000"& std_logic_vector(result);
 hsync_out<=hsync;
 vsync_out<=vsync;
-
+vidon_out<=vidon;
+addrA <= addrAInput when done='0' else addrADisplay;
 --fifo_read <= '0';
 --swint <= signed(sw);
 --ld(0) <= sums(0)(7);
