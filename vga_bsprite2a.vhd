@@ -40,7 +40,7 @@ begin
 		rom_addr1 := ('0' & ypix(4 downto 0) & "0000") + ("00" & ypix(4 downto 0) & "000") + ("000" & ypix(4 downto 0) & "00");	
            -- y*(16+8+4) = y*28
 		rom_addr2 := rom_addr1 + ("00000" & xpix(4 downto 0)); -- y*28+x
-		rom_addr3 := ("000"&rom_addr2) + ("00000" & counter & "0000") + ('0' & counter & "00000000") + (counter & "000000000");
+		rom_addr3 := ("00"&rom_addr2) + ("0000" & counter & "0000") + (counter & "00000000") + (counter & "000000000");
 		-- y*() = y*28
 		rom_addr16 <= rom_addr3;
 	end process;

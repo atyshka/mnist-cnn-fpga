@@ -13,12 +13,11 @@ use work.types.ALL;
 
 entity systolic_topfile is
     port(
-        btnLeft, btnRight, btnClr: in std_logic;
         mclk: in std_logic;
         btn: in std_logic_vector(2 downto 0);
         a_to_g: out std_logic_vector(6 downto 0);
         an: out std_logic_vector(7 downto 0);
-        dp, vidon_out, hsync_out, vsync_out: out std_logic;
+        dp, hsync_out, vsync_out: out std_logic;
         ld, red, green, blue: out std_logic_vector(3 downto 0)
     );
 end systolic_topfile;
@@ -151,13 +150,6 @@ component clkdiv is
            clr : in STD_LOGIC;
            clk25 : out STD_LOGIC);
 end component;
-component IOState is
-    port (
-        btnLeft, btnRight, btnClr, clk: in std_logic;
-        imageCounter: out std_logic_vector(3 downto 0);
-        clr: out std_logic
-    );
-end component;
 
 constant conv_bias: vector_int := 
         (-22614, -1953, 8920, -5721, 1029, -4363, 20850, -3422, -10759, 6682, -2305, -7267);
@@ -191,24 +183,24 @@ signal conv_input: vector_8bit(8 downto 0);
 signal fifo_write, fifo_read, empty : std_logic;
 signal result: unsigned(3 downto 0);
 
-signal hsync, vsync, vidon, done, clr: std_logic;
+signal hsync, vsync, vidon, done, clr, clk25: std_logic;
 signal hc, vc: std_logic_vector (9 downto 0);
-signal counter: std_logic_vector (3 downto 0);
+signal img_counter: std_logic_vector (3 downto 0);
 
 
 begin
---r1: digitsROM port map(clka=>mclk,addra=>addrA,douta=> dataA);
---r2: digitsROM port map(clka=>mclk,addra=>addrB,douta=> dataB);
---r3: digitsROM port map(clka=>mclk,addra=>addrC,douta=> dataC);
---r4: digitsROM port map(clka=>mclk,addra=>addrD,douta=> dataD);
+r1: digitsROM port map(clka=>mclk,addra=>addrA(9 downto 0));
+r2: digitsROM port map(clka=>mclk,addra=>addrB(9 downto 0));
+r3: digitsROM port map(clka=>mclk,addra=>addrC(9 downto 0));
+r4: digitsROM port map(clka=>mclk,addra=>addrD(9 downto 0));
 
 r12: digitsDualROM port map(clka=>mclk,clkb=>mclk, addra=>addrA, addrb=>addrB, douta=> dataA, doutb=>dataB);
 r34: digitsDualROM port map(clka=>mclk,clkb=>mclk, addra=>addrC, addrb=>addrD, douta=> dataC, doutb=>dataD);
 
-state: IOState port map(clk => mclk, btnLeft => btn(2), btnClr => btn(1), btnRight => btn(0), clr => clr);
+state: IOState port map(clk => mclk, btnLeft => btn(2), btnClr => btn(1), btnRight => btn(0), clr => clr, imageCounter => img_counter);
 
 input: inputmanager port map(clk => mclk, clr => clr, addrA => addrAInput, addrB => addrB, addrC => addrC, addrD => addrD,
-                                dataA => dataA, dataB => dataB, dataC => dataC, dataD => dataD, numsOut => conv_input, ImageCount => counter);
+                                dataA => dataA, dataB => dataB, dataC => dataC, dataD => dataD, numsOut => conv_input, ImageCount => img_counter);
 arr: systolic_array generic map(BIASES => conv_bias, SCALES => conv_scaling, WEIGHTS => conv_weights) 
                     port map(clk => mclk, nums_in => conv_input, clr => clr, mac_out => conv_out);
 pool: pooling_unit port map(clk => mclk, clr => clr, active => '1', nums => conv_out, pooled => pooled_out, fifo_write => fifo_write);
@@ -220,11 +212,11 @@ weight_rom: fc_weight_rom port map(clka => mclk, addra => fc_weight_addr, douta 
 
 sevSeg: x7segb8 port map (x => CNNAnswer, clk => mclk, clr => clr, a_to_g => a_to_g, an => an, dp => dp);
 
-VGActrl: vga_640x480 port map (clk => mclk, clr => clr, hc => hc, vc => vc, hsync => hsync, vsync => vsync, vidon => vidon);
+VGActrl: vga_640x480 port map (clk => clk25, clr => btn(1), hc => hc, vc => vc, hsync => hsync, vsync => vsync, vidon => vidon);
 
-VGApic: vga_bsprite2a port map (vidon => vidon, done => done, hc => hc, vc => vc, dataROM => dataA, rom_addr16 => addrADisplay,counter=>counter,red => red, green => green, blue => blue);
+VGApic: vga_bsprite2a port map (vidon => vidon, done => done, hc => hc, vc => vc, dataROM => dataA, rom_addr16 => addrADisplay,counter=>img_counter,red => red, green => green, blue => blue);
 
-ImageCounter: IOState port map (btnLeft=>btnLeft, btnRight=>btnRight, btnClr=>btnClr,clk=>mclk,ImageCounter=>counter, clr=>clr2);
+div: clkdiv port map(clr => btn(1), mclk => mclk, clk25 => clk25);
 
 gen_fifo_signals: for i in 0 to 11 generate
     fifo_input(i*8 + 7 downto i*8) <= std_logic_vector(pooled_out(i));
@@ -234,7 +226,6 @@ ld <= std_logic_vector(result);
 CNNAnswer<= X"0000000"& std_logic_vector(result);
 hsync_out<=hsync;
 vsync_out<=vsync;
-vidon_out<=vidon;
 addrA <= addrAInput when done='0' else addrADisplay;
 --fifo_read <= '0';
 --swint <= signed(sw);
