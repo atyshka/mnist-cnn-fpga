@@ -12,11 +12,10 @@ use work.types.ALL;
 --use UNISIM.VComponents.all;
 
 entity systolic_topfile is
-    generic(H:integer := 12; W:integer := 9);
     port(
         btnLeft, btnRight, btnClr: in std_logic;
         mclk: in std_logic;
-        clr: in std_logic;
+        btn: in std_logic_vector(2 downto 0);
         a_to_g: out std_logic_vector(6 downto 0);
         an: out std_logic_vector(7 downto 0);
         dp, vidon_out, hsync_out, vsync_out: out std_logic;
@@ -147,6 +146,18 @@ component fc_weight_rom is
     douta : OUT STD_LOGIC_VECTOR(79 DOWNTO 0)
   );
 end component;
+component clkdiv is
+    Port ( mclk : in STD_LOGIC;
+           clr : in STD_LOGIC;
+           clk25 : out STD_LOGIC);
+end component;
+component IOState is
+    port (
+        btnLeft, btnRight, btnClr, clk: in std_logic;
+        imageCounter: out std_logic_vector(3 downto 0);
+        clr: out std_logic
+    );
+end component;
 
 constant conv_bias: vector_int := 
         (-22614, -1953, 8920, -5721, 1029, -4363, 20850, -3422, -10759, 6682, -2305, -7267);
@@ -168,7 +179,7 @@ constant conv_weights: matrix_int :=
         (  35,  -84, -127,   55,   25,  -42,   66,   70,   41),
         ( -24,   50,   45,  -97,   23,   67, -127,  -30,   17));
 
-signal conv_out, pooled_out, fc_in: vector_8bit(H-1 downto 0);
+signal conv_out, pooled_out, fc_in: vector_8bit(11 downto 0);
 signal fifo_input, fifo_output: std_logic_vector(95 downto 0);
 signal fc_weights_raw: std_logic_vector(79 downto 0);
 signal fc_weight_addr: std_logic_vector(10 downto 0);
@@ -180,7 +191,7 @@ signal conv_input: vector_8bit(8 downto 0);
 signal fifo_write, fifo_read, empty : std_logic;
 signal result: unsigned(3 downto 0);
 
-signal hsync, vsync, vidon, done, clr2: std_logic;
+signal hsync, vsync, vidon, done, clr: std_logic;
 signal hc, vc: std_logic_vector (9 downto 0);
 signal counter: std_logic_vector (3 downto 0);
 
@@ -193,6 +204,8 @@ begin
 
 r12: digitsDualROM port map(clka=>mclk,clkb=>mclk, addra=>addrA, addrb=>addrB, douta=> dataA, doutb=>dataB);
 r34: digitsDualROM port map(clka=>mclk,clkb=>mclk, addra=>addrC, addrb=>addrD, douta=> dataC, doutb=>dataD);
+
+state: IOState port map(clk => mclk, btnLeft => btn(2), btnClr => btn(1), btnRight => btn(0), clr => clr);
 
 input: inputmanager port map(clk => mclk, clr => clr, addrA => addrAInput, addrB => addrB, addrC => addrC, addrD => addrD,
                                 dataA => dataA, dataB => dataB, dataC => dataC, dataD => dataD, numsOut => conv_input, ImageCount => counter);

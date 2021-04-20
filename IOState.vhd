@@ -44,6 +44,7 @@ architecture Behavioral of IOState is
 type fc_state is (active, clear, left, right);
 signal state: fc_state := clear;
 signal imageCount: std_logic_vector(3 downto 0) := "0000";
+signal clr_internal : std_logic := '1';
 begin
 count_proc: process(clk, btnClr, btnLeft, btnRight)
 begin
@@ -54,29 +55,29 @@ begin
     elsif btnRight = '1' then
       state <= right;
     elsif clk'event and clk = '1' then
+        clr_internal <= '1';
         if (state = active) then
-       
+            clr_internal <= '0';
         elsif (state = left) then
-        state <= clear;
+            state <= clear;
             if(imageCount="0000")then
-                imageCount<=imageCount-'1';
-            else
                 imageCount<="1001";
+            else
+                imageCount<=imageCount-1;
             end if;
         elsif (state = right) then
             if(imageCount="1001")then
-                    imageCount<=imageCount+'1';
-                else
-                    imageCount<="0000";
-                end if;
-        state <= clear;
+                imageCount<="0000";
+            else
+                imageCount<=imageCount+1;
+            end if;
+            state <= clear;
         elsif (state = clear) then
             state <= active;
-            clr <= '1';
         end if;
     end if;
 end process;
 
 imageCounter<=imageCount;
-
+clr <= clr_internal;
 end Behavioral;
