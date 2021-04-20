@@ -34,11 +34,12 @@ use IEEE.NUMERIC_STD.ALL;
 --a <= b when sel_b=1 else c;
 entity inputManager is
     Port ( 
-           addrA : out STD_LOGIC_VECTOR (9 downto 0);
-           addrB : out STD_LOGIC_VECTOR (9 downto 0);
-           addrC : out STD_LOGIC_VECTOR (9 downto 0);     
-           addrD : out STD_LOGIC_VECTOR (9 downto 0);
+           addrA : out STD_LOGIC_VECTOR (12 downto 0);
+           addrB : out STD_LOGIC_VECTOR (12 downto 0);
+           addrC : out STD_LOGIC_VECTOR (12 downto 0);     
+           addrD : out STD_LOGIC_VECTOR (12 downto 0);
            
+           ImageCount : in STD_LOGIC_VECTOR (3 downto 0);
            dataA : in STD_LOGIC_VECTOR (7 downto 0);
            dataB : in STD_LOGIC_VECTOR (7 downto 0);
            dataC : in STD_LOGIC_VECTOR (7 downto 0);     
@@ -160,9 +161,9 @@ numsOut(6) <= signed(dataC) when msel(1)='0' else signed(dataD);
 numsOut(7) <= signed(dataC) when msel(0)='0' else signed(dataD);
 numsOut(8) <= signed(dataC);
 
-addrA<=aA;
-addrB<=aB;
-addrC<=aC;
-addrD<=aD;
+addrA<=("000"&aA) + ("00000" & ImageCount & "0000") + ('0' & ImageCount & "00000000") + (ImageCount & "000000000");
+addrB<=("000"&aB) + ("00000" & ImageCount & "0000") + ('0' & ImageCount & "00000000") + (ImageCount & "000000000");
+addrC<=("000"&aC) + ("00000" & ImageCount & "0000") + ('0' & ImageCount & "00000000") + (ImageCount & "000000000");
+addrD<=("000"&aD) + ("00000" & ImageCount & "0000") + ('0' & ImageCount & "00000000") + (ImageCount & "000000000");
 
 end Behavioral;
