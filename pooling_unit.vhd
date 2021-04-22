@@ -67,7 +67,9 @@ begin
         total_count <= (others => '0');
         row_count <= (others => '0');
     elsif clk'event and clk = '1' then
-        total_count <= total_count + 1;
+        if total_count < 701 then 
+            total_count <= total_count + 1;
+        end if;
         if row_count = 51 then
             row_count <= (others => '0');
         elsif total_count > 24 then
